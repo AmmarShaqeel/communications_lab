@@ -1,5 +1,7 @@
 global Tsampling fsampling
-Tsampling = 1e-7 ; fsampling = 1/Tsampling;
+Tsampling = 1e-7 ; 
+fsampling = 1/Tsampling;
+
 unipolar_alphabet = [0,1];
 polar_alphabet = [-1,1];
 quaternary_alphabet = [-3,-1,1,3];
