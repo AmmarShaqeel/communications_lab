@@ -24,7 +24,6 @@ polar_nsymbols = nbits / log2(length(polar_alphabet));
 polar_t = (0:Tsampling:polar_nsymbols*Ts_polar);
 polar_tx_symbols = map(tx_bits,polar_alphabet);
 polar_tx_signal = modulate((polar_tx_symbols),Ts_polar,polar_nsymbols) ;% Received signal (channel output)
-polar_tx_signal = polar_tx_signal./sqrt(2);
 
 %quaternary
 Ts_quaternary = Tb * log2(length(quaternary_alphabet));
@@ -32,10 +31,13 @@ quaternary_nsymbols = nbits / log2(length(quaternary_alphabet));
 quaternary_t = (0:Tsampling:quaternary_nsymbols*Ts_quaternary);
 quaternary_tx_symbols = map(tx_bits,quaternary_alphabet);
 quaternary_tx_signal = modulate((quaternary_tx_symbols),Ts_quaternary,quaternary_nsymbols) ;% Received signal (channel output)
-quaternary_tx_signal = quaternary_tx_signal./2.1213;
+
+
 count = 1;
 N0 = 0:0.01:1;
-noise = randn(1,length(polar_t));
+noise = randn(1,length(unipolar_t));
+
+%preallocating arrays to speed up code
 SNR_unipolar = zeros(1,length(N0));
 SNR_polar = zeros(1,length(N0));
 SNR_quaternary = zeros(1,length(N0));
@@ -44,17 +46,17 @@ pe_polar = zeros(1,length(N0));
 pe_quaternary = zeros(1,length(N0));
 
 for N0 = 0:0.01:1
-    unipolar_noise = sqrt(fsampling * N0 / 2) * noise;
+    unipolar_noise = sqrt(fsampling * N0 * 0.5 / 2) * noise;
     unipolar_rx_signal = unipolar_tx_signal + unipolar_noise;
     unipolar_rx_symbols = demodulate(unipolar_rx_signal,Ts_unipolar,unipolar_nsymbols);
     unipolar_rx_bits = demap(unipolar_rx_symbols,unipolar_alphabet);
 
-    polar_noise = sqrt(fsampling * N0 / 2) * noise;
+    polar_noise = sqrt(fsampling * N0 * 1 / 2) * noise;
     polar_rx_signal = polar_tx_signal + polar_noise;
     polar_rx_symbols = demodulate(polar_rx_signal,Ts_polar,polar_nsymbols);
     polar_rx_bits = demap(polar_rx_symbols,polar_alphabet);
 
-    quaternary_noise = sqrt(fsampling * N0 / 2) * noise;
+    quaternary_noise = sqrt(fsampling * N0 * 2.5 / 2) * noise;
     quaternary_rx_signal = quaternary_tx_signal + quaternary_noise;
     quaternary_rx_symbols = demodulate(quaternary_rx_signal,Ts_quaternary,quaternary_nsymbols);
     quaternary_rx_bits = demap(quaternary_rx_symbols,quaternary_alphabet);
@@ -64,9 +66,9 @@ for N0 = 0:0.01:1
     polar_error = length(tx_bits) -  nnz(tx_bits == polar_rx_bits);
     quaternary_error = length(tx_bits) -  nnz(tx_bits == quaternary_rx_bits);
     
-    SNR_unipolar(count) = 20*log(1/(N0));
-    SNR_polar(count) = 20*log(1/N0);
-    SNR_quaternary(count) = 20*log(1/(N0));
+    SNR_unipolar(count) = 20*log(rms(unipolar_tx_signal)^2*Ts_unipolar/(N0));
+    SNR_polar(count) = 20*log(rms(polar_tx_signal)^2*Ts_polar/N0);
+    SNR_quaternary(count) = 20*log(rms(quaternary_tx_signal)^2*Ts_quaternary/(N0));
     
     pe_unipolar(count) = unipolar_error/nbits;
     pe_polar(count) = polar_error/nbits;
@@ -77,10 +79,14 @@ end
 
 figure(5)
 semilogy(SNR_unipolar, pe_unipolar);
-hold on
-grid on
+hold on;
+grid on;
 semilogy(SNR_polar, pe_polar);
 semilogy(SNR_quaternary, pe_quaternary);
-set(gca, 'YScale', 'log')
-title('Probability of Bit error vs Eb/N0')
-legend('Unipolar', 'Polar' , 'Quatenary')
+set(gca, 'YScale', 'log');
+title('Probability of Bit error vs Eb/N0');
+legend('Unipolar', 'Polar' , 'Quatenary');
+xlabel('Eb/N0 (dB)');
+ylabel('P(e)');
+hold off;
+
