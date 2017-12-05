@@ -66,9 +66,9 @@ for N0 = 0:0.01:1
     polar_error = length(tx_bits) -  nnz(tx_bits == polar_rx_bits);
     quaternary_error = length(tx_bits) -  nnz(tx_bits == quaternary_rx_bits);
     
-    SNR_unipolar(count) = 20*log(rms(unipolar_tx_signal)^2*Ts_unipolar/(N0));
-    SNR_polar(count) = 20*log(rms(polar_tx_signal)^2*Ts_polar/N0);
-    SNR_quaternary(count) = 20*log(rms(quaternary_tx_signal)^2*Ts_quaternary/(N0));
+    SNR_unipolar(count) = 20*log(1/N0);
+    SNR_polar(count) = 20*log(1/N0);
+    SNR_quaternary(count) = 20*log(1/(N0));
     
     pe_unipolar(count) = unipolar_error/nbits;
     pe_polar(count) = polar_error/nbits;
